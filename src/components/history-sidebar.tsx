@@ -3,7 +3,7 @@
 
 import Image from "next/image";
 import { formatDistanceToNow } from 'date-fns';
-import { Trash2 } from "lucide-react";
+import { RefreshCw, Trash2 } from "lucide-react";
 import { useHistory } from "@/hooks/use-history";
 import {
   Sidebar,
@@ -19,7 +19,7 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function HistorySidebar() {
-  const { history, clearHistory, isLoaded } = useHistory();
+  const { history, clearHistory, isHistoryLoading, isClearingHistory } = useHistory();
 
   return (
     <Sidebar>
@@ -31,7 +31,7 @@ export function HistorySidebar() {
       <Separator />
       <SidebarContent>
         <ScrollArea className="h-full">
-          {!isLoaded ? (
+          {isHistoryLoading ? (
             <div className="p-4 space-y-4">
               <Skeleton className="h-24 w-full" />
               <Skeleton className="h-24 w-full" />
@@ -72,10 +72,14 @@ export function HistorySidebar() {
           variant="destructive"
           className="w-full"
           onClick={clearHistory}
-          disabled={!isLoaded || history.length === 0}
+          disabled={isHistoryLoading || history.length === 0 || isClearingHistory}
         >
-          <Trash2 className="mr-2 h-4 w-4" />
-          Clear History
+          {isClearingHistory ? (
+            <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <Trash2 className="mr-2 h-4 w-4" />
+          )}
+          {isClearingHistory ? 'Clearing...' : 'Clear History'}
         </Button>
       </SidebarFooter>
     </Sidebar>

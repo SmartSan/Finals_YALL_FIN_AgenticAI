@@ -13,9 +13,10 @@ interface ReceiptUploaderProps {
   isLoading: boolean;
   receiptImage: string | null;
   onReset: () => void;
+  isAuthLoading: boolean;
 }
 
-export function ReceiptUploader({ onUpload, isLoading, receiptImage, onReset }: ReceiptUploaderProps) {
+export function ReceiptUploader({ onUpload, isLoading, receiptImage, onReset, isAuthLoading }: ReceiptUploaderProps) {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -40,9 +41,11 @@ export function ReceiptUploader({ onUpload, isLoading, receiptImage, onReset }: 
   };
   
   const handleUploadClick = () => {
-    if (isLoading || receiptImage) return;
+    if (isLoading || receiptImage || isAuthLoading) return;
     fileInputRef.current?.click();
   };
+
+  const isDisabled = isLoading || !!receiptImage || isAuthLoading;
 
   return (
     <Card className="h-full flex flex-col">
@@ -52,11 +55,11 @@ export function ReceiptUploader({ onUpload, isLoading, receiptImage, onReset }: 
       </CardHeader>
       <CardContent className="flex-1 flex flex-col">
         <div 
-          className="flex-1 flex flex-col items-center justify-center w-full border-2 border-dashed rounded-lg p-6 text-center transition-colors data-[has-image=false]:cursor-pointer data-[has-image=false]:hover:border-primary/50"
+          className="flex-1 flex flex-col items-center justify-center w-full border-2 border-dashed rounded-lg p-6 text-center transition-colors data-[disabled=false]:cursor-pointer data-[disabled=false]:hover:border-primary/50"
           onClick={handleUploadClick}
           onDrop={handleDrop}
           onDragOver={handleDragOver}
-          data-has-image={!!receiptImage}
+          data-disabled={isDisabled}
         >
           <input
             type="file"
@@ -64,10 +67,15 @@ export function ReceiptUploader({ onUpload, isLoading, receiptImage, onReset }: 
             onChange={handleFileChange}
             className="hidden"
             accept="image/png, image/jpeg, image/webp"
-            disabled={isLoading || !!receiptImage}
+            disabled={isDisabled}
           />
 
-          {isLoading ? (
+          {isAuthLoading ? (
+            <div className="flex items-center justify-center space-x-2 text-muted-foreground">
+              <RefreshCw className="h-5 w-5 animate-spin"/> 
+              <span>Connecting to history service...</span>
+            </div>
+          ) : isLoading ? (
              <div className="space-y-4 w-full">
                 <Skeleton className="h-48 w-full" />
                 <div className="flex items-center justify-center space-x-2 text-muted-foreground animate-pulse">
@@ -76,12 +84,12 @@ export function ReceiptUploader({ onUpload, isLoading, receiptImage, onReset }: 
                 </div>
             </div>
           ) : receiptImage ? (
-            <div className="relative w-full h-full">
+            <div className="relative w-full h-full min-h-[200px]">
                 <Image
                     src={receiptImage}
                     alt="Uploaded Receipt"
                     fill={true}
-                    objectFit="contain"
+                    style={{objectFit:"contain"}}
                     className="rounded-md"
                 />
                 <Button 

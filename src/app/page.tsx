@@ -7,14 +7,14 @@ import { CombinedOutput } from '@/components/combined-output';
 import { HistorySidebar } from '@/components/history-sidebar';
 import { QrCodeDisplay } from '@/components/qr-code-display';
 import { ReceiptUploader } from '@/components/receipt-uploader';
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import { useToast } from '@/hooks/use-toast';
 import { useHistory } from '@/hooks/use-history';
 import { extractReceiptData } from '@/ai/flows/extract-receipt-data';
 
 export default function Home() {
   const { toast } = useToast();
-  const { addHistoryItem } = useHistory();
+  const { addHistoryItem, isAuthLoading } = useHistory();
 
   const [receiptImage, setReceiptImage] = React.useState<string | null>(null);
   const [extractedText, setExtractedText] = React.useState<string | null>(null);
@@ -90,7 +90,13 @@ export default function Home() {
             <main className="flex-1 overflow-y-auto p-4 md:p-8">
               <div className="max-w-7xl mx-auto">
                 <div className="grid lg:grid-cols-2 gap-8 items-start">
-                  <ReceiptUploader onUpload={handleImageUpload} isLoading={isLoading} receiptImage={receiptImage} onReset={handleReset} />
+                  <ReceiptUploader 
+                    onUpload={handleImageUpload} 
+                    isLoading={isLoading || isAuthLoading} 
+                    receiptImage={receiptImage} 
+                    onReset={handleReset} 
+                    isAuthLoading={isAuthLoading}
+                  />
                   <div className="space-y-8">
                     <QrCodeDisplay extractedText={extractedText} isLoading={isLoading} />
                     <CombinedOutput receiptImage={receiptImage} extractedText={extractedText} />
