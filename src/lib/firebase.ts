@@ -1,9 +1,8 @@
-// Import the functions you need from the SDKs you need
-import { initializeApp, getApp, getApps, FirebaseApp } from "firebase/app";
-import { getFirestore, Firestore } from "firebase/firestore";
-import { getAuth, Auth } from "firebase/auth";
 
-// Your web app's Firebase configuration
+import { initializeApp, getApp, getApps, type FirebaseApp } from "firebase/app";
+import { getAuth, type Auth } from "firebase/auth";
+import { getFirestore, type Firestore } from "firebase/firestore";
+
 const firebaseConfig = {
   "projectId": "qrreceipt-zhjhj",
   "appId": "1:548799767944:web:88826cad03dcb566a8463d",
@@ -14,21 +13,22 @@ const firebaseConfig = {
   "messagingSenderId": "548799767944"
 };
 
-let app: FirebaseApp;
-let auth: Auth;
-let db: Firestore;
-
-if (typeof window !== 'undefined' && getApps().length === 0) {
-  app = initializeApp(firebaseConfig);
-  auth = getAuth(app);
-  db = getFirestore(app);
-} else if (typeof window !== 'undefined') {
-  app = getApp();
-  auth = getAuth(app);
-  db = getFirestore(app);
+// This function ensures that we initialize the app only once
+function getFirebaseApp(): FirebaseApp {
+  if (getApps().length === 0) {
+    return initializeApp(firebaseConfig);
+  }
+  return getApp();
 }
 
-const isFirebaseInitialized = () => getApps().length > 0;
+export function getAuthInstance(): Auth {
+  return getAuth(getFirebaseApp());
+}
 
-// @ts-ignore
-export { db, auth, app, isFirebaseInitialized };
+export function getFirestoreInstance(): Firestore {
+  return getFirestore(getFirebaseApp());
+}
+
+export function isFirebaseInitialized(): boolean {
+  return getApps().length > 0;
+}
