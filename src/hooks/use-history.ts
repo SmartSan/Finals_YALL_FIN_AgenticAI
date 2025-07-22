@@ -2,10 +2,11 @@
 "use client";
 
 import { useState, useEffect, useCallback, createContext, useContext, ReactNode } from 'react';
-import { collection, addDoc, query, where, getDocs, orderBy, writeBatch, doc } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, orderBy, writeBatch } from 'firebase/firestore';
+import { signInAnonymously, onAuthStateChanged, type User } from 'firebase/auth';
 import type { HistoryItem } from '@/types';
-import { getFirestoreInstance } from '@/lib/firebase';
-import { useAuth } from '@/hooks/use-auth';
+import { getAuthInstance, getFirestoreInstance } from '@/lib/firebase';
+import { useToast } from './use-toast';
 
 interface HistoryContextType {
   history: HistoryItem[];
@@ -13,15 +14,43 @@ interface HistoryContextType {
   clearHistory: () => Promise<void>;
   isLoading: boolean;
   isClearingHistory: boolean;
+  isAuthLoading: boolean;
+  user: User | null;
 }
 
 const HistoryContext = createContext<HistoryContextType | undefined>(undefined);
 
 export function HistoryProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
+  const [user, setUser] = useState<User | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isClearingHistory, setIsClearingHistory] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const auth = getAuthInstance();
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
+      } else {
+        try {
+          const userCredential = await signInAnonymously(auth);
+          setUser(userCredential.user);
+        } catch (error) {
+          console.error("Anonymous sign-in failed:", error);
+          toast({
+            variant: "destructive",
+            title: "Authentication Failed",
+            description: "Could not start an anonymous session.",
+          });
+          setUser(null);
+        }
+      }
+      setIsAuthLoading(false);
+    });
+    return () => unsubscribe();
+  }, [toast]);
 
   const fetchHistory = useCallback(async (userId: string) => {
     setIsLoading(true);
@@ -37,7 +66,7 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
       setHistory(historyData);
     } catch (error) {
       console.error("Failed to load history from Firestore", error);
-      setHistory([]); // Clear history on error
+      setHistory([]);
     } finally {
       setIsLoading(false);
     }
@@ -48,13 +77,15 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
       fetchHistory(user.uid);
     } else {
       setHistory([]);
-      setIsLoading(false);
+      if (!isAuthLoading) {
+        setIsLoading(false);
+      }
     }
-  }, [user, fetchHistory]);
+  }, [user, fetchHistory, isAuthLoading]);
 
   const addHistoryItem = useCallback(async (item: Omit<HistoryItem, 'id' | 'timestamp' | 'userId'>) => {
     if (!user) {
-      throw new Error("Cannot save history. No user is authenticated.");
+      throw new Error("Cannot save history. User not authenticated.");
     }
     const db = getFirestoreInstance();
     const newItem: Omit<HistoryItem, 'id'> = {
@@ -83,12 +114,21 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
       querySnapshot.docs.forEach(doc => batch.delete(doc.ref));
       await batch.commit();
       setHistory([]);
+      toast({
+        title: "History Cleared",
+        description: "Your scan history has been cleared.",
+      });
     } catch (error) {
       console.error("Error clearing history: ", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not clear history.",
+      });
     } finally {
       setIsClearingHistory(false);
     }
-  }, [user, history]);
+  }, [user, history.length, toast]);
 
   const value = {
     history,
@@ -96,8 +136,10 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
     clearHistory,
     isLoading,
     isClearingHistory,
+    isAuthLoading,
+    user,
   };
-  
+
   return (
     <HistoryContext.Provider value={value}>
       {children}

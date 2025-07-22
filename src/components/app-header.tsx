@@ -3,7 +3,6 @@
 
 import { History } from "lucide-react"
 import { SidebarTrigger } from "@/components/ui/sidebar"
-import { AuthButton } from "@/components/auth-button"
 
 export function AppHeader() {
   return (
@@ -14,7 +13,6 @@ export function AppHeader() {
         </h1>
       </div>
       <div className="flex items-center gap-4">
-        <AuthButton />
         <SidebarTrigger asChild>
           <button aria-label="Toggle History Sidebar" className="p-2 rounded-md hover:bg-accent">
             <History className="h-5 w-5" />

@@ -7,24 +7,20 @@ import { CombinedOutput } from '@/components/combined-output';
 import { HistorySidebar } from '@/components/history-sidebar';
 import { QrCodeDisplay } from '@/components/qr-code-display';
 import { ReceiptUploader } from '@/components/receipt-uploader';
-import { AuthProvider } from '@/hooks/use-auth';
-import { HistoryProvider } from '@/hooks/use-history';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { useToast } from '@/hooks/use-toast';
 import { extractReceiptData } from '@/ai/flows/extract-receipt-data';
+import { useHistory } from '@/hooks/use-history';
 
-function HomePageContent() {
+export default function HomePage() {
   const { toast } = useToast();
-  // useHistory now needs to be called within HistoryProvider
-  // We'll get addHistoryItem from there. Let's assume HistoryProvider provides it.
-  // For now, this component doesn't directly use useHistory, but ReceiptUploader will.
+  const { addHistoryItem } = useHistory();
 
   const [receiptImage, setReceiptImage] = React.useState<string | null>(null);
   const [extractedText, setExtractedText] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
-  
-  // This function will now be passed to ReceiptUploader, which has access to the history context
-  const handleImageUpload = async (file: File, addHistoryItem: (item: any) => Promise<void>) => {
+
+  const handleImageUpload = async (file: File) => {
     setIsLoading(true);
     setReceiptImage(null);
     setExtractedText(null);
@@ -38,13 +34,13 @@ function HomePageContent() {
 
         const result = await extractReceiptData({ receiptDataUri: imageDataUri });
         const text = result.extractedData;
-        
+
         if (!text) {
           throw new Error("Could not extract text from the receipt.");
         }
 
         setExtractedText(text);
-        
+
         await addHistoryItem({
           receiptImageUri: imageDataUri,
           extractedText: text,
@@ -77,7 +73,7 @@ function HomePageContent() {
       setIsLoading(false);
     };
   };
-  
+
   const handleReset = () => {
     setReceiptImage(null);
     setExtractedText(null);
@@ -93,11 +89,11 @@ function HomePageContent() {
             <main className="flex-1 overflow-y-auto p-4 md:p-8">
               <div className="max-w-7xl mx-auto">
                 <div className="grid lg:grid-cols-2 gap-8 items-start">
-                  <ReceiptUploader 
-                    onUpload={handleImageUpload} 
-                    isLoading={isLoading} 
-                    receiptImage={receiptImage} 
-                    onReset={handleReset} 
+                  <ReceiptUploader
+                    onUpload={handleImageUpload}
+                    isLoading={isLoading}
+                    receiptImage={receiptImage}
+                    onReset={handleReset}
                   />
                   <div className="space-y-8">
                     <QrCodeDisplay extractedText={extractedText} isLoading={isLoading} />
@@ -111,15 +107,4 @@ function HomePageContent() {
       </div>
     </SidebarProvider>
   );
-}
-
-
-export default function Home() {
-  return (
-    <AuthProvider>
-      <HistoryProvider>
-        <HomePageContent />
-      </HistoryProvider>
-    </AuthProvider>
-  )
 }

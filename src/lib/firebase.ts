@@ -1,6 +1,6 @@
 
 import { initializeApp, getApp, getApps, type FirebaseApp } from "firebase/app";
-import { getAuth, type Auth, GoogleAuthProvider } from "firebase/auth";
+import { getAuth, type Auth } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -20,8 +20,15 @@ if (getApps().length === 0) {
   app = getApp();
 }
 
-const auth = getAuth(app);
-const db = getFirestore(app);
-const googleProvider = new GoogleAuthProvider();
+const auth: Auth = getAuth(app);
+let db: Firestore;
 
-export { app, auth, db, googleProvider };
+function getFirestoreInstance() {
+  if (!db) {
+    db = getFirestore(app);
+  }
+  return db;
+}
+
+
+export { app, auth, getFirestoreInstance };

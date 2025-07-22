@@ -3,9 +3,8 @@
 
 import Image from "next/image";
 import { formatDistanceToNow } from 'date-fns';
-import { RefreshCw, Trash2, LogIn } from "lucide-react";
+import { RefreshCw, Trash2 } from "lucide-react";
 import { useHistory } from "@/hooks/use-history";
-import { useAuth } from "@/hooks/use-auth";
 import {
   Sidebar,
   SidebarContent,
@@ -20,11 +19,10 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function HistorySidebar() {
-  const { user, loading: isAuthLoading, signInWithGoogle } = useAuth();
-  const { history, clearHistory, isLoading: isHistoryLoading, isClearingHistory } = useHistory();
+  const { history, clearHistory, isLoading, isClearingHistory, isAuthLoading } = useHistory();
 
   const renderContent = () => {
-    if (isAuthLoading) {
+    if (isLoading || isAuthLoading) {
        return (
         <div className="p-4 space-y-4">
           <Skeleton className="h-24 w-full" />
@@ -33,29 +31,7 @@ export function HistorySidebar() {
         </div>
       );
     }
-    
-    if (!user) {
-      return (
-        <div className="p-4 text-center text-sm text-muted-foreground flex flex-col items-center justify-center h-full space-y-4">
-           <LogIn className="h-10 w-10 text-gray-400" />
-           <p>Sign in to view your scan history.</p>
-           <Button onClick={signInWithGoogle} size="sm">
-              Sign In with Google
-           </Button>
-        </div>
-      );
-    }
-    
-    if (isHistoryLoading) {
-      return (
-        <div className="p-4 space-y-4">
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-24 w-full" />
-        </div>
-      );
-    }
-    
+
     if (history.length === 0) {
        return (
          <div className="p-4 text-center text-sm text-muted-foreground">
@@ -108,7 +84,7 @@ export function HistorySidebar() {
           variant="destructive"
           className="w-full"
           onClick={clearHistory}
-          disabled={!user || isHistoryLoading || history.length === 0 || isClearingHistory}
+          disabled={isAuthLoading || isLoading || history.length === 0 || isClearingHistory}
         >
           {isClearingHistory ? (
             <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
