@@ -1,3 +1,4 @@
+
 "use client";
 
 import Image from "next/image";
@@ -32,9 +33,9 @@ export function HistorySidebar() {
         <ScrollArea className="h-full">
           {!isLoaded ? (
             <div className="p-4 space-y-4">
-              <Skeleton className="h-20 w-full" />
-              <Skeleton className="h-4 w-3/4" />
-              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-24 w-full" />
+              <Skeleton className="h-24 w-full" />
+              <Skeleton className="h-24 w-full" />
             </div>
           ) : history.length === 0 ? (
             <div className="p-4 text-center text-sm text-muted-foreground">
@@ -47,13 +48,14 @@ export function HistorySidebar() {
                   <p className="text-xs text-muted-foreground">
                     {formatDistanceToNow(new Date(item.timestamp), { addSuffix: true })}
                   </p>
-                  <Image
-                    src={item.receiptImageUri}
-                    alt="Scanned receipt"
-                    width={200}
-                    height={300}
-                    className="rounded-md border object-cover"
-                  />
+                  <div className="relative aspect-[2/3] w-full rounded-md border overflow-hidden">
+                    <Image
+                      src={item.receiptImageUri}
+                      alt="Scanned receipt"
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
                   <p className="text-xs text-muted-foreground line-clamp-3">
                     {item.extractedText}
                   </p>

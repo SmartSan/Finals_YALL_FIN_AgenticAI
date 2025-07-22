@@ -1,7 +1,8 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
-import { collection, addDoc, query, where, getDocs, orderBy, deleteDoc, doc } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, orderBy, deleteDoc, doc, writeBatch } from 'firebase/firestore';
 import { signInAnonymously, onAuthStateChanged, User } from 'firebase/auth';
 import type { HistoryItem } from '@/types';
 import { db, auth } from '@/lib/firebase';
@@ -12,18 +13,20 @@ export function useHistory() {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
       } else {
-        await signInAnonymously(auth);
+        signInAnonymously(auth).catch((error) => {
+          console.error("Anonymous sign-in failed:", error);
+        });
       }
     });
     return () => unsubscribe();
   }, []);
 
   const fetchHistory = useCallback(async (userId: string) => {
-    if (!userId) return;
+    setIsLoaded(false);
     try {
       const q = query(
         collection(db, 'history'),
@@ -44,6 +47,7 @@ export function useHistory() {
     if (user) {
       fetchHistory(user.uid);
     } else {
+      // If there's no user, history should be empty and considered loaded.
       setHistory([]);
       setIsLoaded(true);
     }
@@ -51,7 +55,7 @@ export function useHistory() {
 
   const addHistoryItem = useCallback(async (item: Omit<HistoryItem, 'id' | 'timestamp' | 'userId'>) => {
     if (!user) {
-      console.error("No user authenticated");
+      console.error("No user authenticated, cannot add history item.");
       return;
     }
     const newItem: Omit<HistoryItem, 'id'> = {
@@ -61,6 +65,7 @@ export function useHistory() {
     };
     try {
       const docRef = await addDoc(collection(db, 'history'), newItem);
+      // Add the new item with its ID to the start of the history state
       setHistory(prev => [{ ...newItem, id: docRef.id }, ...prev]);
     } catch (error) {
       console.error("Failed to save history to Firestore", error);
@@ -68,23 +73,22 @@ export function useHistory() {
   }, [user]);
 
   const clearHistory = useCallback(async () => {
-    if (!user) return;
+    if (!user || history.length === 0) return;
     try {
-      // Create a query to get all documents for the current user
+      const batch = writeBatch(db);
       const q = query(collection(db, 'history'), where('userId', '==', user.uid));
       const querySnapshot = await getDocs(q);
       
-      // Delete each document
-      const deletePromises = querySnapshot.docs.map((document) => 
-        deleteDoc(doc(db, 'history', document.id))
-      );
-      await Promise.all(deletePromises);
+      querySnapshot.forEach((document) => {
+        batch.delete(doc(db, 'history', document.id));
+      });
       
+      await batch.commit();
       setHistory([]);
     } catch (error) {
       console.error("Error clearing history: ", error);
     }
-  }, [user]);
+  }, [user, history.length]);
 
   return { history, addHistoryItem, clearHistory, isLoaded };
 }
