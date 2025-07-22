@@ -7,20 +7,24 @@ import { CombinedOutput } from '@/components/combined-output';
 import { HistorySidebar } from '@/components/history-sidebar';
 import { QrCodeDisplay } from '@/components/qr-code-display';
 import { ReceiptUploader } from '@/components/receipt-uploader';
+import { AuthProvider } from '@/hooks/use-auth';
+import { HistoryProvider } from '@/hooks/use-history';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { useToast } from '@/hooks/use-toast';
-import { useHistory } from '@/hooks/use-history';
 import { extractReceiptData } from '@/ai/flows/extract-receipt-data';
 
-export default function Home() {
+function HomePageContent() {
   const { toast } = useToast();
-  const { addHistoryItem, isAuthLoading } = useHistory();
+  // useHistory now needs to be called within HistoryProvider
+  // We'll get addHistoryItem from there. Let's assume HistoryProvider provides it.
+  // For now, this component doesn't directly use useHistory, but ReceiptUploader will.
 
   const [receiptImage, setReceiptImage] = React.useState<string | null>(null);
   const [extractedText, setExtractedText] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
-
-  const handleImageUpload = async (file: File) => {
+  
+  // This function will now be passed to ReceiptUploader, which has access to the history context
+  const handleImageUpload = async (file: File, addHistoryItem: (item: any) => Promise<void>) => {
     setIsLoading(true);
     setReceiptImage(null);
     setExtractedText(null);
@@ -41,7 +45,6 @@ export default function Home() {
 
         setExtractedText(text);
         
-        // This is now an async operation
         await addHistoryItem({
           receiptImageUri: imageDataUri,
           extractedText: text,
@@ -49,7 +52,7 @@ export default function Home() {
 
         toast({
           title: "Success",
-          description: "Receipt processed and QR code generated.",
+          description: "Receipt processed and saved to your history.",
         });
       } catch (error) {
         console.error(error);
@@ -92,10 +95,9 @@ export default function Home() {
                 <div className="grid lg:grid-cols-2 gap-8 items-start">
                   <ReceiptUploader 
                     onUpload={handleImageUpload} 
-                    isLoading={isLoading || isAuthLoading} 
+                    isLoading={isLoading} 
                     receiptImage={receiptImage} 
                     onReset={handleReset} 
-                    isAuthLoading={isAuthLoading}
                   />
                   <div className="space-y-8">
                     <QrCodeDisplay extractedText={extractedText} isLoading={isLoading} />
@@ -109,4 +111,15 @@ export default function Home() {
       </div>
     </SidebarProvider>
   );
+}
+
+
+export default function Home() {
+  return (
+    <AuthProvider>
+      <HistoryProvider>
+        <HomePageContent />
+      </HistoryProvider>
+    </AuthProvider>
+  )
 }

@@ -1,43 +1,30 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, createContext, useContext, ReactNode } from 'react';
 import { collection, addDoc, query, where, getDocs, orderBy, writeBatch, doc } from 'firebase/firestore';
-import { signInAnonymously, onAuthStateChanged, User } from 'firebase/auth';
 import type { HistoryItem } from '@/types';
-import { getFirestoreInstance, getAuthInstance } from '@/lib/firebase';
+import { getFirestoreInstance } from '@/lib/firebase';
+import { useAuth } from '@/hooks/use-auth';
 
-export function useHistory() {
+interface HistoryContextType {
+  history: HistoryItem[];
+  addHistoryItem: (item: Omit<HistoryItem, 'id' | 'timestamp' | 'userId'>) => Promise<void>;
+  clearHistory: () => Promise<void>;
+  isLoading: boolean;
+  isClearingHistory: boolean;
+}
+
+const HistoryContext = createContext<HistoryContextType | undefined>(undefined);
+
+export function HistoryProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
   const [history, setHistory] = useState<HistoryItem[]>([]);
-  const [isHistoryLoading, setIsHistoryLoading] = useState(true);
-  const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true);
   const [isClearingHistory, setIsClearingHistory] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    // This effect handles the entire authentication flow.
-    if (typeof window === "undefined") {
-      return;
-    }
-    
-    const auth = getAuthInstance();
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-      } else {
-        signInAnonymously(auth).catch((error) => {
-          console.error("Anonymous sign-in failed:", error);
-        });
-      }
-      // Once we have a user or tried to sign in, auth is no longer loading.
-      setIsAuthLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, []);
 
   const fetchHistory = useCallback(async (userId: string) => {
-    setIsHistoryLoading(true);
+    setIsLoading(true);
     try {
       const db = getFirestoreInstance();
       const q = query(
@@ -50,21 +37,20 @@ export function useHistory() {
       setHistory(historyData);
     } catch (error) {
       console.error("Failed to load history from Firestore", error);
+      setHistory([]); // Clear history on error
     } finally {
-      setIsHistoryLoading(false);
+      setIsLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    // This effect fetches history only when we have a user and auth is settled.
     if (user) {
       fetchHistory(user.uid);
-    } else if (!isAuthLoading) {
-      // If auth is done and there's no user, clear history and stop loading.
+    } else {
       setHistory([]);
-      setIsHistoryLoading(false);
+      setIsLoading(false);
     }
-  }, [user, isAuthLoading, fetchHistory]);
+  }, [user, fetchHistory]);
 
   const addHistoryItem = useCallback(async (item: Omit<HistoryItem, 'id' | 'timestamp' | 'userId'>) => {
     if (!user) {
@@ -78,7 +64,6 @@ export function useHistory() {
     };
     try {
       const docRef = await addDoc(collection(db, 'history'), newItem);
-      // Add the new item to the top of the list for immediate UI update.
       setHistory(prev => [{ ...newItem, id: docRef.id }, ...prev]);
     } catch (error) {
       console.error("Failed to save history to Firestore", error);
@@ -93,13 +78,9 @@ export function useHistory() {
     try {
       const db = getFirestoreInstance();
       const batch = writeBatch(db);
-      // We can just use the IDs from the state to delete documents.
-      history.forEach((item) => {
-        if(item.id) {
-          batch.delete(doc(db, 'history', item.id));
-        }
-      });
-      
+      const q = query(collection(db, 'history'), where('userId', '==', user.uid));
+      const querySnapshot = await getDocs(q);
+      querySnapshot.docs.forEach(doc => batch.delete(doc.ref));
       await batch.commit();
       setHistory([]);
     } catch (error) {
@@ -109,12 +90,25 @@ export function useHistory() {
     }
   }, [user, history]);
 
-  return { 
-    history, 
-    addHistoryItem, 
-    clearHistory, 
-    isHistoryLoading, 
-    isAuthLoading,
-    isClearingHistory 
+  const value = {
+    history,
+    addHistoryItem,
+    clearHistory,
+    isLoading,
+    isClearingHistory,
   };
+  
+  return (
+    <HistoryContext.Provider value={value}>
+      {children}
+    </HistoryContext.Provider>
+  );
+}
+
+export function useHistory() {
+  const context = useContext(HistoryContext);
+  if (context === undefined) {
+    throw new Error('useHistory must be used within a HistoryProvider');
+  }
+  return context;
 }

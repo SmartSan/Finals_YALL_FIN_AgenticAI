@@ -1,5 +1,6 @@
+
 export type HistoryItem = {
-  id?: string; // Firestore document ID
+  id: string; // Firestore document ID
   userId: string;
   receiptImageUri: string;
   extractedText: string;

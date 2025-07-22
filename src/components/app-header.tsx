@@ -1,8 +1,9 @@
+
 "use client"
 
 import { History } from "lucide-react"
 import { SidebarTrigger } from "@/components/ui/sidebar"
-import { Button } from "@/components/ui/button"
+import { AuthButton } from "@/components/auth-button"
 
 export function AppHeader() {
   return (
@@ -12,11 +13,14 @@ export function AppHeader() {
           QRReceipt
         </h1>
       </div>
-      <SidebarTrigger asChild>
-        <Button variant="outline" size="icon" className="shrink-0" aria-label="Toggle History Sidebar">
-          <History className="h-5 w-5" />
-        </Button>
-      </SidebarTrigger>
+      <div className="flex items-center gap-4">
+        <AuthButton />
+        <SidebarTrigger asChild>
+          <button aria-label="Toggle History Sidebar" className="p-2 rounded-md hover:bg-accent">
+            <History className="h-5 w-5" />
+          </button>
+        </SidebarTrigger>
+      </div>
     </header>
   )
 }
