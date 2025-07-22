@@ -92,11 +92,7 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
     isClearingHistory,
   };
 
-  return (
-    <HistoryContext.Provider value={value}>
-      {children}
-    </HistoryContext.Provider>
-  );
+  return <HistoryContext.Provider value={value}>{children}</HistoryContext.Provider>;
 }
 
 export function useHistory() {
