@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback, createContext, useContext, ReactNode 
 import { collection, addDoc, query, where, getDocs, orderBy, writeBatch } from 'firebase/firestore';
 import { signInAnonymously, onAuthStateChanged, type User } from 'firebase/auth';
 import type { HistoryItem } from '@/types';
-import { getAuthInstance, getFirestoreInstance } from '@/lib/firebase';
+import { auth, getFirestoreInstance } from '@/lib/firebase';
 import { useToast } from './use-toast';
 
 interface HistoryContextType {
@@ -29,7 +29,6 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
   useEffect(() => {
-    const auth = getAuthInstance();
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
@@ -66,11 +65,16 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
       setHistory(historyData);
     } catch (error) {
       console.error("Failed to load history from Firestore", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Could not load history.",
+      });
       setHistory([]);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     if (user) {
@@ -85,6 +89,11 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
 
   const addHistoryItem = useCallback(async (item: Omit<HistoryItem, 'id' | 'timestamp' | 'userId'>) => {
     if (!user) {
+      toast({
+        variant: "destructive",
+        title: "Authentication Error",
+        description: "You must be signed in to save history.",
+      });
       throw new Error("Cannot save history. User not authenticated.");
     }
     const db = getFirestoreInstance();
@@ -98,9 +107,14 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
       setHistory(prev => [{ ...newItem, id: docRef.id }, ...prev]);
     } catch (error) {
       console.error("Failed to save history to Firestore", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to save history item.",
+      });
       throw new Error("Failed to save history item.");
     }
-  }, [user]);
+  }, [user, toast]);
 
   const clearHistory = useCallback(async () => {
     if (!user || history.length === 0) return;
@@ -140,11 +154,7 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
     user,
   };
 
-  return (
-    <HistoryContext.Provider value={value}>
-      {children}
-    </HistoryContext.Provider>
-  );
+  return <HistoryContext.Provider value={value}>{children}</HistoryContext.Provider>;
 }
 
 export function useHistory() {
