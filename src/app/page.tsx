@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from 'react';
@@ -78,22 +79,24 @@ export default function Home() {
 
   return (
     <SidebarProvider>
-      <div className="flex flex-col min-h-screen">
+      <div className="flex flex-col h-screen">
         <AppHeader />
-        <HistorySidebar />
-        <SidebarInset>
-          <main className="flex-1 p-4 md:p-8 overflow-y-auto">
-            <div className="max-w-7xl mx-auto">
-              <div className="grid lg:grid-cols-2 gap-8 items-start">
-                <ReceiptUploader onUpload={handleImageUpload} isLoading={isLoading} receiptImage={receiptImage} onReset={handleReset} />
-                <div className="space-y-8">
-                  <QrCodeDisplay extractedText={extractedText} isLoading={isLoading} />
-                  <CombinedOutput receiptImage={receiptImage} extractedText={extractedText} />
+        <div className="flex flex-1 overflow-hidden">
+          <HistorySidebar />
+          <SidebarInset>
+            <main className="flex-1 p-4 md:p-8 overflow-y-auto">
+              <div className="max-w-7xl mx-auto">
+                <div className="grid lg:grid-cols-2 gap-8 items-start">
+                  <ReceiptUploader onUpload={handleImageUpload} isLoading={isLoading} receiptImage={receiptImage} onReset={handleReset} />
+                  <div className="space-y-8">
+                    <QrCodeDisplay extractedText={extractedText} isLoading={isLoading} />
+                    <CombinedOutput receiptImage={receiptImage} extractedText={extractedText} />
+                  </div>
                 </div>
               </div>
-            </div>
-          </main>
-        </SidebarInset>
+            </main>
+          </SidebarInset>
+        </div>
       </div>
     </SidebarProvider>
   );
