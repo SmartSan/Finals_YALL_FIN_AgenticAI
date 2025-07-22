@@ -2,10 +2,10 @@
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
-import { collection, addDoc, query, where, getDocs, orderBy, deleteDoc, doc, writeBatch } from 'firebase/firestore';
+import { collection, addDoc, query, where, getDocs, orderBy, deleteDoc, writeBatch, doc } from 'firebase/firestore';
 import { signInAnonymously, onAuthStateChanged, User } from 'firebase/auth';
 import type { HistoryItem } from '@/types';
-import { db, auth } from '@/lib/firebase';
+import { db, auth, isFirebaseInitialized } from '@/lib/firebase';
 
 export function useHistory() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -13,6 +13,11 @@ export function useHistory() {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
+    if (!isFirebaseInitialized()) {
+      // Firebase is not ready yet, wait for it to initialize.
+      // The initialization is happening in firebase.ts
+      return;
+    }
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
         setUser(currentUser);
@@ -76,6 +81,7 @@ export function useHistory() {
     if (!user || history.length === 0) return;
     try {
       const batch = writeBatch(db);
+      // We can just use the user's UID to query for their documents
       const q = query(collection(db, 'history'), where('userId', '==', user.uid));
       const querySnapshot = await getDocs(q);
       
