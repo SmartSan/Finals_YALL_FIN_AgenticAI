@@ -13,9 +13,8 @@ export function AppHeader() {
         </h1>
       </div>
       <SidebarTrigger asChild>
-        <Button variant="outline" size="icon" className="shrink-0">
+        <Button variant="outline" size="icon" className="shrink-0" aria-label="Toggle History Sidebar">
           <History className="h-5 w-5" />
-          <span className="sr-only">Toggle History Sidebar</span>
         </Button>
       </SidebarTrigger>
     </header>

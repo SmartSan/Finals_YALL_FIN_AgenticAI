@@ -70,13 +70,13 @@ export function CombinedOutput({ receiptImage, extractedText }: CombinedOutputPr
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="font-headline">3. Export Combined Image</CardTitle>
+        <CardTitle>3. Export Combined Image</CardTitle>
         <CardDescription>Download the receipt and QR code as a single image.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="w-full aspect-video bg-gray-100 rounded-lg flex items-center justify-center p-4">
+        <div className="relative w-full aspect-video bg-gray-100 rounded-lg flex items-center justify-center p-4">
           {combinedImage ? (
-            <Image src={combinedImage} alt="Combined receipt and QR code" layout="fill" objectFit="contain" />
+            <Image src={combinedImage} alt="Combined receipt and QR code" width={500} height={300} style={{objectFit: "contain"}} />
           ) : (
             <p className="text-muted-foreground text-center">Combined image will appear here.</p>
           )}

@@ -46,7 +46,7 @@ export function QrCodeDisplay({ extractedText, isLoading }: QrCodeDisplayProps) 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="font-headline">2. Generated QR Code</CardTitle>
+        <CardTitle>2. Generated QR Code</CardTitle>
         <CardDescription>Your QR code is ready. Download or export it.</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col items-center justify-center space-y-4">

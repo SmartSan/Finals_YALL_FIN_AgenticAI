@@ -45,7 +45,7 @@ export function ReceiptUploader({ onUpload, isLoading, receiptImage, onReset }: 
   return (
     <Card className="h-full flex flex-col">
       <CardHeader>
-        <CardTitle className="font-headline">1. Upload Receipt</CardTitle>
+        <CardTitle>1. Upload Receipt</CardTitle>
         <CardDescription>Upload an image of your receipt to get started.</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col">
@@ -77,7 +77,7 @@ export function ReceiptUploader({ onUpload, isLoading, receiptImage, onReset }: 
               <Image
                 src={receiptImage}
                 alt="Uploaded Receipt"
-                layout="fill"
+                fill={true}
                 objectFit="contain"
                 className="rounded-md"
               />
