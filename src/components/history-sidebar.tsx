@@ -15,6 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function HistorySidebar() {
   const { history, clearHistory, isLoaded } = useHistory();
@@ -29,7 +30,13 @@ export function HistorySidebar() {
       <Separator />
       <SidebarContent>
         <ScrollArea className="h-full">
-          {isLoaded && history.length === 0 ? (
+          {!isLoaded ? (
+            <div className="p-4 space-y-4">
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          ) : history.length === 0 ? (
             <div className="p-4 text-center text-sm text-muted-foreground">
               Your generated receipts will appear here.
             </div>
@@ -63,7 +70,7 @@ export function HistorySidebar() {
           variant="destructive"
           className="w-full"
           onClick={clearHistory}
-          disabled={history.length === 0}
+          disabled={!isLoaded || history.length === 0}
         >
           <Trash2 className="mr-2 h-4 w-4" />
           Clear History

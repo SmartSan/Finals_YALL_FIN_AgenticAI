@@ -40,10 +40,13 @@ export default function Home() {
         }
 
         setExtractedText(text);
-        addHistoryItem({
+        
+        // This is now an async operation
+        await addHistoryItem({
           receiptImageUri: imageDataUri,
           extractedText: text,
         });
+
         toast({
           title: "Success",
           description: "Receipt processed and QR code generated.",
@@ -79,12 +82,12 @@ export default function Home() {
 
   return (
     <SidebarProvider>
-      <div className="flex flex-col h-screen">
+      <div className="flex flex-col h-screen bg-background">
         <AppHeader />
         <div className="flex flex-1 overflow-hidden">
           <HistorySidebar />
-          <SidebarInset>
-            <main className="flex-1 p-4 md:p-8 overflow-y-auto">
+          <div className="flex-1 flex flex-col">
+            <main className="flex-1 overflow-y-auto p-4 md:p-8">
               <div className="max-w-7xl mx-auto">
                 <div className="grid lg:grid-cols-2 gap-8 items-start">
                   <ReceiptUploader onUpload={handleImageUpload} isLoading={isLoading} receiptImage={receiptImage} onReset={handleReset} />
@@ -95,7 +98,7 @@ export default function Home() {
                 </div>
               </div>
             </main>
-          </SidebarInset>
+          </div>
         </div>
       </div>
     </SidebarProvider>
