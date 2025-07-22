@@ -7,7 +7,6 @@ import { UploadCloud, X, RefreshCw } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { Skeleton } from './ui/skeleton';
-import { useHistory } from '@/hooks/use-history';
 
 interface ReceiptUploaderProps {
   onUpload: (file: File) => void;
@@ -18,7 +17,6 @@ interface ReceiptUploaderProps {
 
 export function ReceiptUploader({ onUpload, isLoading, receiptImage, onReset }: ReceiptUploaderProps) {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
-  const { isAuthLoading } = useHistory();
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -42,22 +40,13 @@ export function ReceiptUploader({ onUpload, isLoading, receiptImage, onReset }: 
   };
 
   const handleUploadClick = () => {
-    if (isLoading || receiptImage || isAuthLoading) return;
+    if (isLoading || receiptImage) return;
     fileInputRef.current?.click();
   };
 
-  const isDisabled = isLoading || !!receiptImage || isAuthLoading;
+  const isDisabled = isLoading || !!receiptImage;
 
   const renderContent = () => {
-    if (isAuthLoading) {
-      return (
-         <div className="flex items-center justify-center space-x-2 text-muted-foreground">
-              <RefreshCw className="h-5 w-5 animate-spin"/>
-              <span>Initializing...</span>
-         </div>
-      );
-    }
-
     if (isLoading) {
       return (
         <div className="space-y-4 w-full">

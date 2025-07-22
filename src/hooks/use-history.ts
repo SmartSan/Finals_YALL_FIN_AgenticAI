@@ -2,138 +2,78 @@
 "use client";
 
 import { useState, useEffect, useCallback, createContext, useContext, ReactNode } from 'react';
-import { collection, addDoc, query, where, getDocs, orderBy, writeBatch } from 'firebase/firestore';
-import { signInAnonymously, onAuthStateChanged, type User } from 'firebase/auth';
-import type { HistoryItem } from '@/types';
-import { auth, getFirestoreInstance } from '@/lib/firebase';
 import { useToast } from './use-toast';
+import type { HistoryItem } from '@/types';
+
+const HISTORY_STORAGE_KEY = 'qrReceiptHistory';
 
 interface HistoryContextType {
   history: HistoryItem[];
-  addHistoryItem: (item: Omit<HistoryItem, 'id' | 'timestamp' | 'userId'>) => Promise<void>;
+  addHistoryItem: (item: Omit<HistoryItem, 'id' | 'timestamp'>) => Promise<void>;
   clearHistory: () => Promise<void>;
   isLoading: boolean;
   isClearingHistory: boolean;
-  isAuthLoading: boolean;
-  user: User | null;
 }
 
 const HistoryContext = createContext<HistoryContextType | undefined>(undefined);
 
 export function HistoryProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isAuthLoading, setIsAuthLoading] = useState(true);
   const [isClearingHistory, setIsClearingHistory] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      if (currentUser) {
-        setUser(currentUser);
-      } else {
-        try {
-          const userCredential = await signInAnonymously(auth);
-          setUser(userCredential.user);
-        } catch (error) {
-          console.error("Anonymous sign-in failed:", error);
-          toast({
-            variant: "destructive",
-            title: "Authentication Failed",
-            description: "Could not start an anonymous session.",
-          });
-          setUser(null);
-        }
-      }
-      setIsAuthLoading(false);
-    });
-    return () => unsubscribe();
-  }, [toast]);
-
-  const fetchHistory = useCallback(async (userId: string) => {
-    setIsLoading(true);
     try {
-      const db = getFirestoreInstance();
-      const q = query(
-        collection(db, 'history'),
-        where('userId', '==', userId),
-        orderBy('timestamp', 'desc')
-      );
-      const querySnapshot = await getDocs(q);
-      const historyData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as HistoryItem));
-      setHistory(historyData);
+      const storedHistory = localStorage.getItem(HISTORY_STORAGE_KEY);
+      if (storedHistory) {
+        setHistory(JSON.parse(storedHistory));
+      }
     } catch (error) {
-      console.error("Failed to load history from Firestore", error);
+      console.error("Failed to load history from local storage", error);
       toast({
         variant: "destructive",
         title: "Error",
         description: "Could not load history.",
       });
-      setHistory([]);
     } finally {
       setIsLoading(false);
     }
   }, [toast]);
 
-  useEffect(() => {
-    if (user) {
-      fetchHistory(user.uid);
-    } else {
-      setHistory([]);
-      if (!isAuthLoading) {
-        setIsLoading(false);
-      }
-    }
-  }, [user, fetchHistory, isAuthLoading]);
-
-  const addHistoryItem = useCallback(async (item: Omit<HistoryItem, 'id' | 'timestamp' | 'userId'>) => {
-    if (!user) {
-      toast({
-        variant: "destructive",
-        title: "Authentication Error",
-        description: "You must be signed in to save history.",
-      });
-      throw new Error("Cannot save history. User not authenticated.");
-    }
-    const db = getFirestoreInstance();
-    const newItem: Omit<HistoryItem, 'id'> = {
-      ...item,
-      userId: user.uid,
-      timestamp: Date.now(),
-    };
+  const addHistoryItem = useCallback(async (item: Omit<HistoryItem, 'id' | 'timestamp'>) => {
     try {
-      const docRef = await addDoc(collection(db, 'history'), newItem);
-      setHistory(prev => [{ ...newItem, id: docRef.id }, ...prev]);
+      const newItem: HistoryItem = {
+        ...item,
+        id: crypto.randomUUID(),
+        timestamp: Date.now(),
+      };
+      const updatedHistory = [newItem, ...history];
+      setHistory(updatedHistory);
+      localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(updatedHistory));
     } catch (error) {
-      console.error("Failed to save history to Firestore", error);
+      console.error("Failed to save history to local storage", error);
       toast({
         variant: "destructive",
         title: "Error",
         description: "Failed to save history item.",
       });
-      throw new Error("Failed to save history item.");
     }
-  }, [user, toast]);
+  }, [history, toast]);
 
   const clearHistory = useCallback(async () => {
-    if (!user || history.length === 0) return;
+    if (history.length === 0) return;
 
     setIsClearingHistory(true);
     try {
-      const db = getFirestoreInstance();
-      const batch = writeBatch(db);
-      const q = query(collection(db, 'history'), where('userId', '==', user.uid));
-      const querySnapshot = await getDocs(q);
-      querySnapshot.docs.forEach(doc => batch.delete(doc.ref));
-      await batch.commit();
+      localStorage.removeItem(HISTORY_STORAGE_KEY);
       setHistory([]);
       toast({
         title: "History Cleared",
         description: "Your scan history has been cleared.",
       });
     } catch (error) {
-      console.error("Error clearing history: ", error);
+      console.error("Error clearing history from local storage: ", error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -142,7 +82,7 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsClearingHistory(false);
     }
-  }, [user, history.length, toast]);
+  }, [history.length, toast]);
 
   const value = {
     history,
@@ -150,11 +90,13 @@ export function HistoryProvider({ children }: { children: ReactNode }) {
     clearHistory,
     isLoading,
     isClearingHistory,
-    isAuthLoading,
-    user,
   };
 
-  return <HistoryContext.Provider value={value}>{children}</HistoryContext.Provider>;
+  return (
+    <HistoryContext.Provider value={value}>
+      {children}
+    </HistoryContext.Provider>
+  );
 }
 
 export function useHistory() {

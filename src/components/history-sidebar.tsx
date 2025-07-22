@@ -19,10 +19,10 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function HistorySidebar() {
-  const { history, clearHistory, isLoading, isClearingHistory, isAuthLoading } = useHistory();
+  const { history, clearHistory, isLoading, isClearingHistory } = useHistory();
 
   const renderContent = () => {
-    if (isLoading || isAuthLoading) {
+    if (isLoading) {
        return (
         <div className="p-4 space-y-4">
           <Skeleton className="h-24 w-full" />
@@ -84,7 +84,7 @@ export function HistorySidebar() {
           variant="destructive"
           className="w-full"
           onClick={clearHistory}
-          disabled={isAuthLoading || isLoading || history.length === 0 || isClearingHistory}
+          disabled={isLoading || history.length === 0 || isClearingHistory}
         >
           {isClearingHistory ? (
             <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
