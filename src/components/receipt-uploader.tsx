@@ -1,3 +1,4 @@
+
 "use client";
 
 import Image from 'next/image';
@@ -39,6 +40,7 @@ export function ReceiptUploader({ onUpload, isLoading, receiptImage, onReset }: 
   };
   
   const handleUploadClick = () => {
+    if (isLoading || receiptImage) return;
     fileInputRef.current?.click();
   };
 
@@ -50,10 +52,11 @@ export function ReceiptUploader({ onUpload, isLoading, receiptImage, onReset }: 
       </CardHeader>
       <CardContent className="flex-1 flex flex-col">
         <div 
-          className="relative flex-1 flex flex-col items-center justify-center w-full border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors hover:border-primary/50"
+          className="flex-1 flex flex-col items-center justify-center w-full border-2 border-dashed rounded-lg p-6 text-center transition-colors data-[has-image=false]:cursor-pointer data-[has-image=false]:hover:border-primary/50"
           onClick={handleUploadClick}
           onDrop={handleDrop}
           onDragOver={handleDragOver}
+          data-has-image={!!receiptImage}
         >
           <input
             type="file"
@@ -74,21 +77,21 @@ export function ReceiptUploader({ onUpload, isLoading, receiptImage, onReset }: 
             </div>
           ) : receiptImage ? (
             <div className="relative w-full h-full">
-              <Image
-                src={receiptImage}
-                alt="Uploaded Receipt"
-                fill={true}
-                objectFit="contain"
-                className="rounded-md"
-              />
-              <Button 
-                variant="destructive" 
-                size="icon" 
-                className="absolute top-2 right-2 z-10"
-                onClick={(e) => { e.stopPropagation(); onReset(); }}
-              >
-                <X className="h-4 w-4" />
-              </Button>
+                <Image
+                    src={receiptImage}
+                    alt="Uploaded Receipt"
+                    fill={true}
+                    objectFit="contain"
+                    className="rounded-md"
+                />
+                <Button 
+                    variant="destructive" 
+                    size="icon" 
+                    className="absolute top-2 right-2 z-10"
+                    onClick={(e) => { e.stopPropagation(); onReset(); }}
+                >
+                    <X className="h-4 w-4" />
+                </Button>
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center space-y-2 text-muted-foreground">
