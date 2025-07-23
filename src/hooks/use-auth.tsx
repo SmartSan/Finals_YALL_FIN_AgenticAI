@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { getAuth, onAuthStateChanged, User, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut as firebaseSignOut } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, User, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut as firebaseSignOut, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import type { AuthContextType, AuthProviderProps, SignUpCredentials, SignInCredentials } from '@/types';
 import { app } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
@@ -19,17 +19,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
+      if (user) {
+        router.push('/');
+      }
     });
 
     return () => unsubscribe();
-  }, [auth]);
+  }, [auth, router]);
 
   const signUp = async ({ email, password }: SignUpCredentials) => {
     setLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       setUser(userCredential.user);
-      router.push('/');
       return userCredential.user;
     } catch (error) {
       console.error("Error signing up:", error);
@@ -44,7 +46,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       setUser(userCredential.user);
-      router.push('/');
       return userCredential.user;
     } catch (error) {
       console.error("Error signing in:", error);
@@ -53,6 +54,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setLoading(false);
     }
   };
+
+  const signInWithGoogle = async () => {
+    setLoading(true);
+    const provider = new GoogleAuthProvider();
+    try {
+      const userCredential = await signInWithPopup(auth, provider);
+      setUser(userCredential.user);
+      return userCredential.user;
+    } catch (error) {
+      console.error("Error signing in with Google:", error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const signOut = async () => {
     setLoading(true);
@@ -73,6 +89,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     loading,
     signUp,
     signIn,
+    signInWithGoogle,
     signOut,
   };
 

@@ -25,6 +25,7 @@ export interface AuthContextType {
   loading: boolean;
   signUp: (credentials: SignUpCredentials) => Promise<User | null>;
   signIn: (credentials: SignInCredentials) => Promise<User | null>;
+  signInWithGoogle: () => Promise<User | null>;
   signOut: () => Promise<void>;
 }
 
