@@ -2,6 +2,7 @@
 "use client";
 
 import * as React from 'react';
+import { useRouter } from 'next/navigation';
 import { AppHeader } from '@/components/app-header';
 import { CombinedOutput } from '@/components/combined-output';
 import { HistorySidebar } from '@/components/history-sidebar';
@@ -11,14 +12,38 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { useToast } from '@/hooks/use-toast';
 import { extractReceiptData } from '@/ai/flows/extract-receipt-data';
 import { useHistory } from '@/hooks/use-history';
+import { useAuth } from '@/hooks/use-auth';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function HomePage() {
   const { toast } = useToast();
   const { addHistoryItem } = useHistory();
+  const { user, loading } = useAuth();
+  const router = useRouter();
 
   const [receiptImage, setReceiptImage] = React.useState<string | null>(null);
   const [extractedText, setExtractedText] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
+
+  if (loading || !user) {
+    return (
+      <div className="flex flex-col h-screen bg-background">
+        <AppHeader />
+        <div className="flex flex-1 items-center justify-center">
+            <div className="flex flex-col items-center gap-4">
+                 <Skeleton className="h-10 w-48" />
+                 <Skeleton className="h-64 w-full max-w-lg" />
+            </div>
+        </div>
+      </div>
+    );
+  }
 
   const handleImageUpload = async (file: File) => {
     setIsLoading(true);
