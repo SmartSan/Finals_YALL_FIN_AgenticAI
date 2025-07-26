@@ -49,27 +49,40 @@ function HomePageContent() {
         const receipt = new window.Image();
         receipt.src = receiptImage;
         receipt.onload = async () => {
-          const qrCodeDataUrl = await QRCode.toDataURL(extractedText, { width: receipt.height * 0.4, margin: 1 });
+          // A little smaller to not overwhelm receipt
+          const qrCodeDataUrl = await QRCode.toDataURL(extractedText, { width: receipt.height * 0.5, margin: 1 });
           const qrCode = new window.Image();
           qrCode.src = qrCodeDataUrl;
 
           qrCode.onload = () => {
-            const padding = 30;
-            canvas.width = receipt.width + qrCode.width + padding * 3;
+            const padding = 30; // 30px padding
+            const spacing = 20; // 20px space between receipt and QR code
+            
+            // Set canvas dimensions
+            canvas.width = receipt.width + spacing + qrCode.width + padding * 2;
             canvas.height = Math.max(receipt.height, qrCode.height) + padding * 2;
             
-            ctx.fillStyle = '#F5F5F0'; // Off-white background
+            // Fill background
+            ctx.fillStyle = 'white';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            ctx.drawImage(receipt, padding, padding, receipt.width, receipt.height);
+            // Draw receipt image
+            ctx.drawImage(receipt, padding, padding);
 
-            const qrX = receipt.width + padding * 2;
-            const qrY = (canvas.height - qrCode.height) / 2;
-            ctx.drawImage(qrCode, qrX, qrY, qrCode.width, qrCode.height);
+            // Draw QR code
+            const qrX = padding + receipt.width + spacing;
+            const qrY = padding + (receipt.height - qrCode.height) / 2;
+            ctx.drawImage(qrCode, qrX, qrY);
 
             setCombinedImage(canvas.toDataURL('image/png'));
           };
+           qrCode.onerror = () => {
+             console.error("Failed to load QR code image for canvas.");
+          }
         };
+        receipt.onerror = () => {
+           console.error("Failed to load receipt image for canvas.");
+        }
       };
 
       generateCombinedImage();
@@ -152,6 +165,7 @@ function HomePageContent() {
   const handleReset = () => {
     setReceiptImage(null);
     setExtractedText(null);
+    setCombinedImage(null);
   }
 
   return (

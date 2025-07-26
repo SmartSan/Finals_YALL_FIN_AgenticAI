@@ -8,10 +8,10 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit/zod';
+import { z } from 'zod';
 import { Resend } from 'resend';
 
-export const SendEmailInputSchema = z.object({
+const SendEmailInputSchema = z.object({
   to: z.string().email().describe('The recipient email address.'),
   subject: z.string().describe('The subject of the email.'),
   text: z.string().describe('The text body of the email.'),
