@@ -14,7 +14,6 @@ import { useHistory, HistoryProvider } from '@/hooks/use-history';
 import { useAuth, AuthProvider } from '@/hooks/use-auth';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { EmailSender } from '@/components/email-sender';
 import QRCode from 'qrcode';
 
 
@@ -189,8 +188,10 @@ function HomePageContent() {
                     <QrCodeDisplay extractedText={extractedText} isLoading={isLoading} />
                   </div>
                   <div className="space-y-8">
-                    <CombinedOutput combinedImage={combinedImage} />
-                    <EmailSender extractedText={extractedText} combinedImage={combinedImage} />
+                    <CombinedOutput
+                      combinedImage={combinedImage}
+                      extractedText={extractedText}
+                    />
                   </div>
                 </div>
               </div>
