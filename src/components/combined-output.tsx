@@ -3,13 +3,14 @@
 
 import { useEffect, useRef, useState } from 'react';
 import QRCode from 'qrcode';
-import { Button } from './ui/button';
+import { Button, buttonVariants } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { Download, Send } from 'lucide-react';
 import Image from 'next/image';
 import { Separator } from './ui/separator';
 import { Label } from './ui/label';
 import { Input } from './ui/input';
+import { cn } from '@/lib/utils';
 
 interface CombinedOutputProps {
   receiptImage: string | null;
@@ -72,17 +73,10 @@ export function CombinedOutput({ receiptImage, extractedText }: CombinedOutputPr
     document.body.removeChild(link);
   };
 
-  const handleSendEmail = () => {
-    if (!extractedText || !recipientEmail) return;
-
-    const subject = "Your Scanned Receipt";
-    const body = `Here is the text from your scanned receipt:\n\n${extractedText}`;
-    
-    const mailtoLink = `mailto:${recipientEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    
-    window.location.href = mailtoLink;
-  };
-
+  const isEmailDisabled = !extractedText || !recipientEmail;
+  const mailtoHref = isEmailDisabled 
+    ? '#' 
+    : `mailto:${recipientEmail}?subject=${encodeURIComponent("Your Scanned Receipt")}&body=${encodeURIComponent(`Here is the text from your scanned receipt:\n\n${extractedText}`)}`;
 
   return (
     <Card>
@@ -118,15 +112,19 @@ export function CombinedOutput({ receiptImage, extractedText }: CombinedOutputPr
               disabled={!extractedText}
             />
           </div>
-          <Button 
-            onClick={handleSendEmail} 
-            disabled={!extractedText || !recipientEmail} 
-            className="w-full"
-            variant="secondary"
+          <a
+            href={mailtoHref}
+            className={cn(
+              buttonVariants({ variant: 'secondary' }),
+              'w-full',
+              isEmailDisabled && 'pointer-events-none opacity-50'
+            )}
+            aria-disabled={isEmailDisabled}
+            tabIndex={isEmailDisabled ? -1 : undefined}
           >
             <Send className="mr-2 h-4 w-4" />
             Send Email
-          </Button>
+          </a>
         </div>
 
       </CardContent>
