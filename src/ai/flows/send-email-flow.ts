@@ -39,11 +39,9 @@ const sendEmailFlow = ai.defineFlow(
         'RESEND_API_KEY is not set. Please add it to your .env file.'
       );
     }
-     if (!process.env.RESEND_FROM_EMAIL) {
-      throw new Error(
-        'RESEND_FROM_EMAIL is not set. Please add it to your .env file.'
-      );
-    }
+    
+    // Use the verified domain from env, or default to the Resend test address.
+    const fromAddress = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
 
     const { to, subject, text, attachmentDataUri } = input;
 
@@ -53,7 +51,7 @@ const sendEmailFlow = ai.defineFlow(
 
     try {
       await resend.emails.send({
-        from: process.env.RESEND_FROM_EMAIL,
+        from: fromAddress,
         to: to,
         subject: subject,
         text: text,
