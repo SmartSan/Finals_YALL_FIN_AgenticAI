@@ -1,11 +1,15 @@
+
 "use client";
 
 import { useEffect, useRef, useState } from 'react';
 import QRCode from 'qrcode';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
-import { Download } from 'lucide-react';
+import { Download, Send } from 'lucide-react';
 import Image from 'next/image';
+import { Separator } from './ui/separator';
+import { Label } from './ui/label';
+import { Input } from './ui/input';
 
 interface CombinedOutputProps {
   receiptImage: string | null;
@@ -15,6 +19,7 @@ interface CombinedOutputProps {
 export function CombinedOutput({ receiptImage, extractedText }: CombinedOutputProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [combinedImage, setCombinedImage] = useState<string | null>(null);
+  const [recipientEmail, setRecipientEmail] = useState('');
 
   useEffect(() => {
     if (receiptImage && extractedText) {
@@ -67,11 +72,23 @@ export function CombinedOutput({ receiptImage, extractedText }: CombinedOutputPr
     document.body.removeChild(link);
   };
 
+  const handleSendEmail = () => {
+    if (!extractedText || !recipientEmail) return;
+
+    const subject = "Your Scanned Receipt";
+    const body = `Here is the text from your scanned receipt:\n\n${extractedText}`;
+    
+    const mailtoLink = `mailto:${recipientEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    
+    window.location.href = mailtoLink;
+  };
+
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>3. Export Combined Image</CardTitle>
-        <CardDescription>Download the receipt and QR code as a single image.</CardDescription>
+        <CardTitle>3. Export</CardTitle>
+        <CardDescription>Download or email your receipt and QR code.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="relative w-full aspect-video bg-gray-100 rounded-lg flex items-center justify-center p-4">
@@ -85,6 +102,33 @@ export function CombinedOutput({ receiptImage, extractedText }: CombinedOutputPr
           <Download className="mr-2 h-4 w-4" />
           Download Combined Image
         </Button>
+
+        <Separator className="my-4" />
+        
+        <div className="space-y-4">
+          <p className="text-sm font-medium text-foreground">Email Receipt Text</p>
+          <div className="space-y-2">
+            <Label htmlFor="email-recipient">Recipient Email</Label>
+            <Input 
+              id="email-recipient" 
+              type="email" 
+              placeholder="recipient@example.com"
+              value={recipientEmail}
+              onChange={(e) => setRecipientEmail(e.target.value)}
+              disabled={!extractedText}
+            />
+          </div>
+          <Button 
+            onClick={handleSendEmail} 
+            disabled={!extractedText || !recipientEmail} 
+            className="w-full"
+            variant="secondary"
+          >
+            <Send className="mr-2 h-4 w-4" />
+            Send Email
+          </Button>
+        </div>
+
       </CardContent>
       <canvas ref={canvasRef} style={{ display: 'none' }} />
     </Card>

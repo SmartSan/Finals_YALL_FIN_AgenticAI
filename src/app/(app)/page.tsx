@@ -15,7 +15,6 @@ import { useAuth } from '@/hooks/use-auth';
 import { AuthProvider } from '@/hooks/use-auth';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { EmailSender } from '@/components/email-sender';
 
 function HomePageContent() {
   const { toast } = useToast();
@@ -128,7 +127,6 @@ function HomePageContent() {
                   <div className="space-y-8">
                     <QrCodeDisplay extractedText={extractedText} isLoading={isLoading} />
                     <CombinedOutput receiptImage={receiptImage} extractedText={extractedText} />
-                    <EmailSender extractedText={extractedText} />
                   </div>
                 </div>
               </div>
