@@ -15,6 +15,9 @@ import { useAuth } from '@/hooks/use-auth';
 import { AuthProvider } from '@/hooks/use-auth';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
+import { EmailSender } from '@/components/email-sender';
+import QRCode from 'qrcode';
+
 
 function HomePageContent() {
   const { toast } = useToast();
@@ -25,12 +28,56 @@ function HomePageContent() {
   const [receiptImage, setReceiptImage] = React.useState<string | null>(null);
   const [extractedText, setExtractedText] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
+  const [combinedImage, setCombinedImage] = React.useState<string | null>(null);
+  const canvasRef = React.useRef<HTMLCanvasElement>(null);
+
 
   React.useEffect(() => {
     if (!loading && !user) {
       router.push('/login');
     }
   }, [user, loading, router]);
+
+  React.useEffect(() => {
+    if (receiptImage && extractedText) {
+      const generateCombinedImage = async () => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        const receipt = new window.Image();
+        receipt.src = receiptImage;
+        receipt.onload = async () => {
+          const qrCodeDataUrl = await QRCode.toDataURL(extractedText, { width: receipt.height * 0.4, margin: 1 });
+          const qrCode = new window.Image();
+          qrCode.src = qrCodeDataUrl;
+
+          qrCode.onload = () => {
+            const padding = 30;
+            canvas.width = receipt.width + qrCode.width + padding * 3;
+            canvas.height = Math.max(receipt.height, qrCode.height) + padding * 2;
+            
+            ctx.fillStyle = '#F5F5F0'; // Off-white background
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.drawImage(receipt, padding, padding, receipt.width, receipt.height);
+
+            const qrX = receipt.width + padding * 2;
+            const qrY = (canvas.height - qrCode.height) / 2;
+            ctx.drawImage(qrCode, qrX, qrY, qrCode.width, qrCode.height);
+
+            setCombinedImage(canvas.toDataURL('image/png'));
+          };
+        };
+      };
+
+      generateCombinedImage();
+    } else {
+      setCombinedImage(null);
+    }
+  }, [receiptImage, extractedText]);
 
   if (loading || !user) {
     return (
@@ -110,6 +157,7 @@ function HomePageContent() {
 
   return (
     <SidebarProvider>
+       <canvas ref={canvasRef} style={{ display: 'none' }} />
       <div className="flex flex-col h-screen bg-background">
         <AppHeader />
         <div className="flex flex-1 overflow-hidden">
@@ -118,15 +166,18 @@ function HomePageContent() {
             <main className="flex-1 overflow-y-auto p-4 md:p-8">
               <div className="max-w-7xl mx-auto">
                 <div className="grid lg:grid-cols-2 gap-8 items-start">
-                  <ReceiptUploader
-                    onUpload={handleImageUpload}
-                    isLoading={isLoading}
-                    receiptImage={receiptImage}
-                    onReset={handleReset}
-                  />
                   <div className="space-y-8">
+                    <ReceiptUploader
+                      onUpload={handleImageUpload}
+                      isLoading={isLoading}
+                      receiptImage={receiptImage}
+                      onReset={handleReset}
+                    />
                     <QrCodeDisplay extractedText={extractedText} isLoading={isLoading} />
-                    <CombinedOutput receiptImage={receiptImage} extractedText={extractedText} />
+                  </div>
+                  <div className="space-y-8">
+                    <CombinedOutput combinedImage={combinedImage} />
+                    <EmailSender extractedText={extractedText} combinedImage={combinedImage} />
                   </div>
                 </div>
               </div>
