@@ -74,15 +74,16 @@ export function CombinedOutput({ receiptImage, extractedText }: CombinedOutputPr
   };
 
   const isEmailDisabled = !extractedText || !recipientEmail;
+  const mailtoBody = `Here is the text from your scanned receipt. You can attach the downloaded image to this email.\n\n${extractedText}`;
   const mailtoHref = isEmailDisabled 
     ? '#' 
-    : `mailto:${recipientEmail}?subject=${encodeURIComponent("Your Scanned Receipt")}&body=${encodeURIComponent(`Here is the text from your scanned receipt:\n\n${extractedText}`)}`;
+    : `mailto:${recipientEmail}?subject=${encodeURIComponent("Your Scanned Receipt")}&body=${encodeURIComponent(mailtoBody)}`;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>3. Export</CardTitle>
-        <CardDescription>Download or email your receipt and QR code.</CardDescription>
+        <CardDescription>Download your combined receipt and QR code, or email the receipt text.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="relative w-full aspect-video bg-gray-100 rounded-lg flex items-center justify-center p-4">
@@ -92,17 +93,20 @@ export function CombinedOutput({ receiptImage, extractedText }: CombinedOutputPr
             <p className="text-muted-foreground text-center">Combined image will appear here.</p>
           )}
         </div>
-        <Button onClick={handleDownload} disabled={!combinedImage} className="w-full">
-          <Download className="mr-2 h-4 w-4" />
-          Download Combined Image
-        </Button>
-
-        <Separator className="my-4" />
         
         <div className="space-y-4">
-          <p className="text-sm font-medium text-foreground">Email Receipt Text</p>
           <div className="space-y-2">
-            <Label htmlFor="email-recipient">Recipient Email</Label>
+            <Label>Step 1: Download Image (Optional)</Label>
+            <Button onClick={handleDownload} disabled={!combinedImage} className="w-full">
+              <Download className="mr-2 h-4 w-4" />
+              Download Combined Image
+            </Button>
+          </div>
+
+          <Separator className="my-4" />
+
+          <div className="space-y-2">
+            <Label htmlFor="email-recipient">Step 2: Email Receipt Text</Label>
             <Input 
               id="email-recipient" 
               type="email" 
@@ -125,6 +129,9 @@ export function CombinedOutput({ receiptImage, extractedText }: CombinedOutputPr
             <Send className="mr-2 h-4 w-4" />
             Send Email
           </a>
+          <p className="text-xs text-muted-foreground text-center">
+            Note: This will open your default mail client. File attachments are not supported.
+          </p>
         </div>
 
       </CardContent>
