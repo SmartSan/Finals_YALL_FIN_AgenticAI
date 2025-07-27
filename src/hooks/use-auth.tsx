@@ -19,19 +19,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
       setLoading(false);
-      if (user) {
-        router.push('/');
-      }
     });
 
     return () => unsubscribe();
-  }, [auth, router]);
+  }, [auth]);
 
   const signUp = async ({ email, password }: SignUpCredentials) => {
     setLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       setUser(userCredential.user);
+      router.push('/');
       return userCredential.user;
     } catch (error) {
       console.error("Error signing up:", error);
@@ -46,6 +44,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       setUser(userCredential.user);
+      router.push('/');
       return userCredential.user;
     } catch (error) {
       console.error("Error signing in:", error);
@@ -61,6 +60,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const userCredential = await signInWithPopup(auth, provider);
       setUser(userCredential.user);
+      router.push('/');
       return userCredential.user;
     } catch (error) {
       console.error("Error signing in with Google:", error);
