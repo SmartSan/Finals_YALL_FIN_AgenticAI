@@ -77,7 +77,7 @@ export function QrCodeDisplay({ extractedText, isLoading }: QrCodeDisplayProps) 
               <Download className="mr-2 h-4 w-4" />
               Download QR Code
             </Button>
-            <Button disabled={true} variant="outline" className="w-full">
+            <Button variant="outline" className="w-full">
                 <GoogleWalletIcon />
                 Add to Google Wallet
             </Button>
