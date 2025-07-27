@@ -11,7 +11,7 @@ import { ReceiptUploader } from '@/components/receipt-uploader';
 import { useToast } from '@/hooks/use-toast';
 import { extractReceiptData } from '@/ai/flows/extract-receipt-data';
 import { useHistory, HistoryProvider } from '@/hooks/use-history';
-import { useAuth, AuthProvider } from '@/hooks/use-auth';
+import { useAuth } from '@/hooks/use-auth';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
 import QRCode from 'qrcode';
@@ -206,10 +206,8 @@ function HomePageContent() {
 
 export default function HomePage() {
   return (
-    <AuthProvider>
-        <HistoryProvider>
-          <HomePageContent />
-        </HistoryProvider>
-    </AuthProvider>
+    <HistoryProvider>
+      <HomePageContent />
+    </HistoryProvider>
   );
 }
