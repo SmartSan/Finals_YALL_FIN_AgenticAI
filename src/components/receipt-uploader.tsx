@@ -3,10 +3,12 @@
 
 import Image from 'next/image';
 import * as React from 'react';
-import { UploadCloud, X, RefreshCw } from 'lucide-react';
+import { UploadCloud, X, RefreshCw, Camera } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { Skeleton } from './ui/skeleton';
+import { CameraCapture } from './camera-capture';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog';
 
 interface ReceiptUploaderProps {
   onUpload: (file: File) => void;
@@ -17,6 +19,7 @@ interface ReceiptUploaderProps {
 
 export function ReceiptUploader({ onUpload, isLoading, receiptImage, onReset }: ReceiptUploaderProps) {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const [isCameraOpen, setIsCameraOpen] = React.useState(false);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -43,6 +46,11 @@ export function ReceiptUploader({ onUpload, isLoading, receiptImage, onReset }: 
     if (isLoading || receiptImage) return;
     fileInputRef.current?.click();
   };
+  
+  const handlePhotoTaken = (imageFile: File) => {
+    setIsCameraOpen(false);
+    onUpload(imageFile);
+  }
 
   const isDisabled = isLoading || !!receiptImage;
 
@@ -98,7 +106,7 @@ export function ReceiptUploader({ onUpload, isLoading, receiptImage, onReset }: 
           Upload an image of your receipt to get started.
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex-1 flex flex-col">
+      <CardContent className="flex-1 flex flex-col gap-4">
         <div
           className="flex-1 flex flex-col items-center justify-center w-full border-2 border-dashed rounded-lg p-6 text-center transition-colors data-[disabled=false]:cursor-pointer data-[disabled=false]:hover:border-primary/50"
           onClick={handleUploadClick}
@@ -116,6 +124,20 @@ export function ReceiptUploader({ onUpload, isLoading, receiptImage, onReset }: 
           />
           {renderContent()}
         </div>
+         <Dialog open={isCameraOpen} onOpenChange={setIsCameraOpen}>
+            <DialogTrigger asChild>
+                 <Button variant="outline" className="w-full" disabled={isDisabled}>
+                    <Camera className="mr-2 h-4 w-4"/>
+                    Open Camera
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl">
+                <DialogHeader>
+                    <DialogTitle>Capture Receipt</DialogTitle>
+                </DialogHeader>
+                <CameraCapture onPhotoTaken={handlePhotoTaken} />
+            </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );
