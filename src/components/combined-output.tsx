@@ -48,7 +48,7 @@ export function CombinedOutput({ combinedImage, extractedText }: CombinedOutputP
       await sendEmail({
         to: recipient,
         subject: 'Your Scanned Receipt',
-        text: `Here is the text from your scanned receipt:\n\n${extractedText}`,
+        text: `Here is the text from your scanned receipt:\n\n${extractedText}\n\nAdd to Google Wallet from Gmail receipts and pass`,
         attachmentDataUri: combinedImage,
       });
 
