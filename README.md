@@ -13,7 +13,7 @@ To add something technical to your README based on the project description, you 
 
 ---
 
-[Agentic AI based Receipt Management along with subscriptions](https://studio--walletwise-qo6yy.us-central1.hosted.app/)
+[Click this LINK -> Agentic AI based Receipt Management along with subscriptions](https://studio--walletwise-qo6yy.us-central1.hosted.app/)
 
 [If Receipt doesn't have QR/Bar code, use this middleware to generate QR code with image combined to make it easy for Google Wallet Addition because from Web to Android, it accepts mostly QR code/ Barcode Bill](https://studio--qrreceipt-zhjhj.us-central1.hosted.app)
 
